@@ -1,0 +1,1592 @@
+---
+title: '52414: Home Exam'
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+date: "July 18th, 2021"
+---
+
+
+
+### Q0.Submission Instructions (Please read carefully)   
+
+The exam will be submitted **individually** by uploading the solved exam `Rmd` and `html` files to the course `moodle`. 
+Please name your files as `52414-HomeExam_ID.Rmd` and `52414-HomeExam_ID.html` where `ID` is replaced by your ID number (do **not** write your name in the file name or in the exam itself).
+The number of points for each sub-question is indicated next to it, with $105$ points overall. The total grade will be at most $100$. 
+
+Once you click on the `moodle` link for the home exam, the exam will start and you have three days (72 hours) to complete and submit it. 
+The exam will be available from July 18th to July 30th. The last submission time is June 30th at 23:59. <br>
+You may use all course materials, the web and other written materials and R libraries. 
+You are NOT allowed to discuss any of the exam questions/materials with other students. 
+
+
+**Analysis and Presentation of Results:**
+
+Write your answers and explanations in the text of the `Rmd` file (*not* in the `code`). <br>
+The text of your answers should be next to the relevant code, plots and tables and refer to them, and not at a separate place at the end. <br>
+You need to explain every step of your analysis. When in doubt, a more detailed explanation is better than omitting explanations. 
+
+Give informative titles, axis names and names for each curve/bar in your graphs. 
+In some graphs you may need to change the graph limits. If you do so, please include the outlier points you have removed in a separate table.  <br>
+Add informative comments explaining your code <br>
+
+Whenever possible, use *objective* and *specific* terms and quantities learned in class, and avoid *subjective* and *general* unquantified statements. For example: <br>
+`Good:` "We see a $2.5$-fold increase in the curve from Jan. 1st to March 1st". <br>
+`Bad:` "The curve goes up at the beginning". <br>
+`Good:` "The median is $4.7$. We detected five outliers with distance $>3$ standard deviations from the median". <br>
+`Bad:` "The five points on the sides seem far from the middle". 
+
+Sometimes `Tables` are the best way to present your results (e.g. when asked for a list of items). Exclude irrelevant
+rows/columns. Display clearly items' names in your `Tables`.
+
+Show numbers in plots/tables using standard digits and not scientific display. 
+That is: 90000000 and not 9e+06.  
+Round numbers to at most 3 digits after the dot - that is, 9.456 and not 9.45581451044
+
+Some questions may require data wrangling and manipulation which you need to 
+decide on. The instructions may not specify precisely the exact plot you should use
+(for example: `show the distribution of ...`). In such cases, you should decide what and how to show the results. 
+
+When analyzing real data, use your best judgment if you encounter missing values, negative values, NaNs, errors in the data etc. (e.g. excluding them, zeroing negative values..) and mention what you have done in your analysis in such cases. 
+
+Required libraries are called in the `Rmd` file. Install any library missing from your `R` environment. You are allowed to add additional libraries if you want. 
+If you do so, *please add them at the start of the Rmd file, right below the existing libraries, and explain what libraries you've added, and what is each new library used for*. 
+
+##############################################################################
+
+
+
+```{r, echo = FALSE, results = 'hide', warning=FALSE, message=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(rvest)
+library(dplyr)
+library(reshape)
+library(data.table)
+library(caTools)
+library(plotly)
+
+options(scipen=999)
+```
+
+<br/><br/>
+
+
+
+## Q1. Two Armies Simulation (45 pt)    
+<img src="https://images.freeimages.com/images/premium/previews/1923/19232816-toy-soldiers-war-concepts.jpg" alt="soldiers" width="300"/>
+
+Consider two armies of $10$ `R` loving statisticians and $10$ `Python` loving statisticians, facing each other in a shootout, fighting to the death over which language is better. 
+
+Once the battle starts, assume that each statistician tries to shoot as fast as she can, where the time until shooting has an exponential distribution with $\lambda=1$. After a shot is fired, the statistician keeps firing, with the time to the next shot again distributed as $exp(1)$. Each statistician keeps shooting until she is shot and killed herself by a statistician from the opposing army, and leaves the battle. The times until shooting the next bullet for all statisticians and all shots are independent. <br>
+At each shot, the statistician chooses as target **uniformly at random** a member from the remaining **living members** of the opposing army. 
+<br>
+The battle keeps going until all persons from one of the armies die, and then the other army is declared the `winner`. 
+Let $X$ be the number of remaining statisticians from the `winner` army when the battle ends. <br>
+Throughout this question, assume that statisticians are **perfect shooters**, and always hit their target (the choice of the target changes however between different sub-questions below).
+
+
+a. (5pt) Describe `in words only` (no code) a simulation strategy to estimate $E[X]$ and $Var(X)$, including how would you simulate a battle between the two armies. <br>
+**Hint:** remember that the exponential distribution has a memoryless property: $Pr(T>t) = Pr(T > t+s | T>s)$, $\forall t, s > 0$. <br>
+You can perform the simulations in this question exactly as described, which may take many minutes to run, or perform **simpler** and **faster** simulations using probabilistic arguments, provided that they are **equivalent** to the description in the question. <br>
+(For example, if you were requested to simulate $n$ i.i.d. $Bernouli(p)$ random variables and report their sum, you could argue that instead it is enough to simulate a single $Bionomial(n,p)$ random variable).
+
+
+b. (8pt) Simulate $1,000$ random battles as described in the question and use them to estimate $E[X]$ and $Var(X)$ from the random simulations.  <br>
+It is recommended to write a function for the simulation and call it, such that the simulation function can be used also in the subsequent sub-questions. 
+
+
+c. (8pt) Now, change $n$, the number of statisticians in each army, to be $n=10, 20, 40, ..., 10240$ (each time multiplying $n$ by two), and let $X_n$ be the random variable counting the number of remaining winners when starting with $n$ statisticians in each army. (so the variable $X$ from (a.) corresponds to $X_{10}$). <br>
+For each value of $n$ simulate $100$ random battles and estimate $\mu_n \equiv E[X_n]$. 
+Plot your estimate vs. $n$. <br>
+Find a simple function $f(n)$ such that it holds that $\mu_n \approx f(n)$ based on the plot. 
+(**Hint:** you can use log-scale). 
+
+
+d. (8pt) In this sub-question, assume that all statisticians in both armies have used their programming language too much so they became to hate it, and therefore in each shot they aim and kill a random member from their **own** army (including possibly themselves). <br>
+Modify the simulation to accommodate this case, and repeat the simulation, plot and finding a function $f(n)$ as in (c.) for this case. <br>
+Explain in words the differences in results between the two cases. 
+
+
+e. (8pt) In this sub-question, assume that all statisticians in both armies are **completely drunk**, and shoot randomly one of the **remaining persons alive** (from both armies) including themselves (they still always hit their target).  
+Repeat all the steps of (c.) for this case (as you did in (d.)). Are the results similar or different? why? 
+
+
+f. (8pt) Finally, suppose in this sub-question that statisticians that are shot become zombies instead of being killed, and can still keep shooting at statisticians from the opposing army (as in (a.), (b.)). <br>
+All statisticians aim at and hit a random **living** (non-zombie) member from the opposing army. The battle ends when all members of a certain army become zombies, and then $X_n$ records the number of remaining living (non-zombie) statisticians in the other army. <br>
+Repeat the simulation, plot and finding a function $f(n)$ as in (c.) for this case. <br>
+Explain in words the differences in results between the this and the previous cases. 
+
+
+**Solutions:**
+
+# Question Number 1
+## Sub Question A
+
+The purpose of the simulation is to conceptualizing the reality by coding, in order to make conclusions. My simulation is about to perform this question exactly as described.
+In the beginning I will create 2 armies, each army has soldiers. Afterwards I will give each soldier time till shooting. **This time distributed as exp(1)**.
+The soldier who has the lowest time will shoot first, he will shoot randomly (**distributed uniformly**) one of the survivors soldiers of the opposing army. Therefor I will sample one of the soldier
+in the other army and remove him from the soldiers data.
+
+Afterwards, base on the fact that exponential distribution has a **memoryless property**: Pr(T>t)=Pr(T>t+s|T>s), ∀t,s>0, I will update the whole soldiers time until shootings.
+i, e. I will subtract from the whole remain shooting times the time its took the last shooter to shot.
+At the same time I will give the last soldier who shot - new time till next shooting; This time distributed as exp(1) as well.
+
+In this phase we compare the soldiers time until shooting, the one with the lowest value will shoot **uniformly at random** one of the survivor soldiers in the opposing army, and so forth.
+
+Those iterations will stop when one of the armies would not have any soldier, this time represent the end of one battle. In the end of the battle we will get the number of survivors in the winner army.
+
+According to the law of large numbers - if we will execute a lot of simulation (battles) and extract each time the number of remaining statisticians from the winner army, $E[X]$ will be closer to the mean value in reality, and the calculation of the results variant will be a good estimation for the real value in reality. 
+
+
+## Sub Question B
+
+In this answer I will execute my strategy from answer A.
+The following function (armies.function function) gets number of soldiers in each army in single battle, and it returns the number of survivors in the the winner army.
+
+```{r}
+armies.function <- function(n) {
+  
+  # n*2 shootings are distributed as exp(1)
+  python_exp <- rexp(n, rate = 1)
+  r_exp <- rexp(n, rate = 1)
+  
+  # checking the number of alive soldiers in each army
+  num_p = length(python_exp)
+  num_r = length(r_exp)
+  
+  # the battle will be continued till one army is going to win
+  while (num_p > 0 & num_r > 0) {
+    
+    # check which team shootes
+    min_p = min(python_exp)
+    min_r = min(r_exp)
+    
+    # Python team shoots in this iteration
+    if (min_p < min_r) {
+      # checking who is the shooter
+      shooters <- c(which(python_exp == min_p))
+      
+      # memoryless property (time synchronization)
+      python_exp = python_exp - min_p
+      r_exp = r_exp - min_p
+      
+      # new exponential distribution till next shoot
+      for (s in shooters) {
+        python_exp[s] = rexp(1, rate = 1)
+      }
+      
+      # select randomly killed people 
+      deads = sample(r_exp, length(shooters), replace = TRUE)
+      
+      # the chosen people are killed
+      for (d in deads){
+        r_exp = r_exp[r_exp != d]
+      }
+    }
+    
+    # R team shoots in this iteration
+    if (min_p > min_r) {
+      shooters <- c(which(r_exp == min_r))
+      
+      # memoryless property (time synchronization)
+      python_exp = python_exp - min_r
+      r_exp = r_exp - min_r
+      
+      # new exponential distribution till next shoot
+      for (s in shooters) {
+        r_exp[s] = rexp(1, rate = 1)
+      }
+      
+      # select randomly killed people
+      deads = sample(python_exp, length(shooters), replace = TRUE)
+      
+      # the chosen people are killed
+      for (d in deads){
+        python_exp = python_exp[python_exp != d]
+      }
+    }
+    
+    # Both teams shoot simultaneously
+    if (min_p == min_r) {
+      r_shooters <- c(which(r_exp == min_r))
+      p_shooters <- c(which(python_exp == min_p))
+      
+      python_exp = python_exp - min_p
+      r_exp = r_exp - min_r
+      
+      for (s in r_shooters) {
+        r_exp[s] = rexp(1, rate = 1)
+      }
+      
+      for (s in p_shooters) {
+        python_exp[s] = rexp(1, rate = 1)
+      }
+      
+      p_deads = sample(python_exp, length(r_shooters), replace = TRUE)
+      r_deads = sample(r_exp, length(p_shooters), replace = TRUE)
+      
+      for (d in p_deads){
+        python_exp = python_exp[python_exp != d]
+      }
+      
+      for (d in r_deads){
+        r_exp = r_exp[r_exp != d]
+      }
+    }
+    
+    # calculate the number of remaining soldiers
+    num_p = length(python_exp)
+    num_r = length(r_exp)
+    
+  }
+  
+  # calculate in the end of the battle how many people in the winner team were survived
+  xs = max(num_p, num_r)
+  return(xs)
+}
+
+```
+
+Now we can call this function 1000 times with the parameter n=10 (number of soldiers). We will get 1000 results, then we will calculate the $E[X]$ and $Var(X)$ values with R functions: mean(x) and var(x) accordingly:
+
+```{r}
+
+x=c()
+
+for (i in rep(1:1000)) {
+  x = c(x,armies.function(10))
+}
+
+a <- mean(x)
+b <- var(x)
+
+```
+
+We got $E[X]$ is equal `r a` and $Var(X)$ is equal `r b`.
+
+
+## Sub Question C
+
+In this sub question we will create another for loop which will input our armies.function function
+the number of soldiers in each army in a the beginning of a battle.
+
+```{r}
+
+x = c()
+y = c()
+
+for (j in rep(0:10)) {
+  # n is the number of soldiers
+  n = 10*(2^j)
+  
+  x = c(x, n)
+  
+  cur_x = c()
+  #iterate 100 battles for each number of soldiers
+  for (i in rep(1:100)) {
+    cur_x = c(cur_x, armies.function(n))
+  }
+  # calculate the expected value of the x-es values 
+  cur_mew = mean(cur_x)
+  # y contains the whole Expected values of the 100 battles/simulations
+  y = c(y, cur_mew)
+}
+# create dataframe from x and y
+dd <- data.frame(x,y)
+
+p <- dd %>% ggplot(aes(x=x, y=y)) +
+  geom_line( color="grey") +
+  geom_point(shape=21, color="black", fill="#69b3a2", size=6) +
+  xlab("Number of soldiers in each group")+
+  ylab("Number of servivors in the winner group")+
+  ggtitle("Number of survivors in the winner group per soldiers number") + 
+  scale_y_log10() + scale_x_log10()
+
+p
+```
+
+As we can see there is a linear connection between x and y, meaning function with this form: y= m*x+n
+when m is the incline of the line and n is the intersection poin with y-axis.
+Our plot can be represent approximately by: y = x/10.
+
+
+## Sub Question D
+
+Now we need to change a little bit the 'armies.function' function we wrote, the only change is the part which the killed people that will be selected. Instead of the killed will be chosen from the opposing army, they will be chosen from the shooter army.
+This is the new function:
+
+```{r}
+armies.function <- function(n) {
+  
+  
+  python_exp <- rexp(n, rate = 1)
+  r_exp <- rexp(n, rate = 1)
+  
+  num_p = length(python_exp)
+  num_r = length(r_exp)
+  
+  while (num_p > 0 & num_r > 0) {
+    
+    
+    min_p = min(python_exp)
+    min_r = min(r_exp)
+    
+    if (min_p < min_r) {
+      shooters <- c(which(python_exp == min_p))
+      
+      python_exp = python_exp - min_p
+      r_exp = r_exp - min_p
+      
+      for (s in shooters) {
+        python_exp[s] = rexp(1, rate = 1)
+      }
+      # The killed people are selected from Python group
+      deads = sample(python_exp, length(shooters), replace = TRUE)
+      
+      # the chosen people are killed
+      for (d in deads){
+        python_exp = python_exp[python_exp != d]
+      }
+    }
+    
+    if (min_p > min_r) {
+      shooters <- c(which(r_exp == min_r))
+      
+      python_exp = python_exp - min_r
+      r_exp = r_exp - min_r
+      
+      for (s in shooters) {
+        r_exp[s] = rexp(1, rate = 1)
+      }
+      # The killed people are selected from R group
+      deads = sample(r_exp, length(shooters), replace = TRUE)
+      
+# the chosen people are killed
+      for (d in deads){
+        r_exp = r_exp[r_exp != d]
+      }
+    }
+    
+    if (min_p == min_r) {
+      r_shooters <- c(which(r_exp == min_r))
+      p_shooters <- c(which(python_exp == min_p))
+      
+      python_exp = python_exp - min_p
+      r_exp = r_exp - min_r
+      
+      for (s in r_shooters) {
+        r_exp[s] = rexp(1, rate = 1)
+      }
+      
+      for (s in p_shooters) {
+        python_exp[s] = rexp(1, rate = 1)
+      }
+      # there are killed from both armies
+      p_deads = sample(python_exp, length(p_shooters), replace = TRUE)
+      r_deads = sample(r_exp, length(r_shooters), replace = TRUE)
+      
+      for (d in p_deads){
+        python_exp = python_exp[python_exp != d]
+      }
+      
+      for (d in r_deads){
+        r_exp = r_exp[r_exp != d]
+      }
+    }
+    
+    # survivors from last iteration
+    num_p = length(python_exp)
+    num_r = length(r_exp)
+    
+  }
+  # xs is the number of survivors from the winner group
+  xs = max(num_p, num_r)
+  return(xs)
+}
+
+```
+
+now we will run the edited 'armies.function' function like in subquestion c.
+
+```{r}
+
+x = c()
+y = c()
+
+for (j in rep(0:10)) {
+  # the number of soldiers
+  n = 10*(2^j)
+  
+  x = c(x, n)
+
+  cur_x = c()
+  #iterate 100 battles for each number of soldiers
+  for (i in rep(1:100)) {
+    cur_x = c(cur_x, armies.function(n))
+  }
+  
+  cur_mew = mean(cur_x)
+
+  y = c(y, cur_mew)
+  
+}
+
+dd <- data.frame(x, y)
+
+dd %>% ggplot(aes(x=x, y=y)) +
+  geom_line( color="grey") +
+  geom_point(shape=21, color="black", fill="#69b3a2", size=6) +
+  xlab("Number of soldiers in each group")+
+  ylab("Number of servivors in the winner group")+
+  ggtitle("Number of survivors in the winner group per soldiers number") + 
+  scale_y_log10() + scale_x_log10()
+
+```
+
+As we can see, now there is no connection between the values x and y.
+The value of E(x) have been change absolutely during the simulations - its values are getting bigger and getting smaller without any formula.
+כלומר ערכי התוחלת יורדים ועולים ויורדים ולא מתקיימת התייצבות כלשהי. קרי, אין עלייה או ירידה מתמדת של הערכים
+In contrast to this, in c subquery the value of the E(x) were getting bigger along with the values of n.
+
+להלן הסבר אופציונאלי להבדלי התוצאות בין סעיף ג לסעיף ד:
+
+בסעיף ג ישנו אפקט של העצמה - כאשר בתחילת הקרב צבא מסויים יורה על יריבו יותר פעמים משיריבו יורה עליו יש סיכוי גבוה יותר שערך המינימום של זמן עד היריה (שמתפלג אקספוננציאלית) יהיה אצל אחד מחייליו, מה שיוביל לכך שהצבא עם היתרון ההתחלתי יישמר את יתרונו וימשיך בסבירות גבוה לירות לפני יריבו. כך לאורך הקרב יש סיכוי שאותו צבא יגדיל את יתרונו ומספר חייליו ישאר גבוה לאורך הקרב. לכן, ככל שיש יותר חיילים בכל צבא כך יוותרו יותר חיילים בסיום הקרב - לצבא שישמר את יתרונו
+
+בסעיף ד לעומת זאת מי שכביכול בעל יתרון התחלתי ויורה ראשון, פוגע בצבא של עצמו והורג אחד מחייליו. באיטרציה הבאה יהיו לו פחות חיילים מהצבא האוייב ולאור כמות חייליו יש סיכוי מעט נמוך יותר שערך המינימום של הזמן עד הירייה הבאה יהיה אצל אחד מאנשיו, ובמקביל עולה הסיכוי של הצבא היריב לבצע את הירייה הבאה. בסימולציה מעין זאת לא מתקבל מצב של שימור היתרון ובכל איטרציה יש סיכוי של קבוצה שונה לירות. לכן הקרב נגמר לאחר איטרציות רבות ונותרים אנשים בודדים בסיומו.
+במצב מעין זה למספר האנשים שיש בשתי הצבאות בתחילת הקרב אין השפעה על מספר החיילים שנותרו בסיומו.
+תמיד תיוותר כמות קטנה של חיילים.
+
+## Sub Question E
+
+Now when the soldiers are completely drunk we need to add a new element to our code, now before every shot we have to choose (uniformaly probability) at least one of the armies: R or Python (we sample randomly one of the armies considering the number of soldiers in each army). Afterwards the killed soldiers will be choose randomly from that chosen group.
+Note that if there are few shooters in the same time - at least one army will be chosen. i, e. the shooters are individuals and are not influenced by other shooters.
+כלומר, עבור כל יורה תיבחר קבוצה אליה הוא ירה את כדורו, תתבצע דגימה בהתחשב במספר החיילים שנותרו בכל קבוצה.
+
+Here is the new version of our armies.function function:
+
+```{r}
+armies.function <- function(n) {
+  
+  
+  python_exp <- rexp(n, rate = 1)
+  r_exp <- rexp(n, rate = 1)
+  
+  
+  num_p = length(python_exp)
+  num_r = length(r_exp)
+  
+  while (num_p > 0 & num_r > 0) {
+    
+    # vector which contain the armies names with quantity
+    teams = rep(c("R", "Python"), times = c(num_r, num_p))
+    
+    min_p = min(python_exp)
+    min_r = min(r_exp)
+    
+    if (min_p < min_r) {
+      shooters <- c(which(python_exp == min_p))
+      
+      python_exp = python_exp - min_p
+      r_exp = r_exp - min_p
+      
+      for (s in shooters) {
+        python_exp[s] = rexp(1, rate = 1)
+      }
+      # choose one of the armies (uniform distribution) for each shooter
+      choosen_team = sample(teams, length(shooters), replace = TRUE)
+    }
+    
+    if (min_p > min_r) {
+      shooters <- c(which(r_exp == min_r))
+      
+      python_exp = python_exp - min_r
+      r_exp = r_exp - min_r
+      
+      for (s in shooters) {
+        r_exp[s] = rexp(1, rate = 1)
+      }
+      # choose one of the armies (uniform distribution) for each shooter     
+      choosen_team = sample(teams, length(shooters), replace = TRUE)
+      }
+    
+    # there are at least 2 shooters from different armies
+    if (min_p == min_r) {
+      r_shooters <- c(which(r_exp == min_r))
+      p_shooters <- c(which(python_exp == min_p))
+      shooters <- c(r_shooters, p_shooters)
+      
+      python_exp = python_exp - min_p
+      r_exp = r_exp - min_r
+      
+      for (s in shooters) {
+        r_exp[s] = rexp(1, rate = 1)
+      }
+      # choose one of the group (uniform distribution) for each shooter
+      choosen_team = sample(teams, length(shooters), replace = TRUE)
+      
+      }
+    
+    r_deads_n = length(which(choosen_team=="R"))
+    p_deads_n = length(which(choosen_team=="Python"))
+    
+    r_deads = sample(r_exp, r_deads_n, replace = TRUE)
+    
+    for (d in r_deads){
+      r_exp = r_exp[r_exp != d]
+    }
+    
+    p_deads = sample(python_exp, p_deads_n, replace = TRUE)
+    
+    for (d in p_deads){
+      python_exp = python_exp[python_exp != d]
+    }
+    
+    num_p = length(python_exp)
+    num_r = length(r_exp)
+    
+  }
+  
+  xs = max(num_p, num_r)
+  return(xs)
+}
+
+```
+
+Now we are going to do the same thing we did in the 2 last subquestions:
+
+```{r}
+x = c()
+y = c()
+
+for (j in rep(0:10)) {
+  # the number of soldiers
+  n = 10*(2^j)
+  
+  x = c(x, n)
+
+  cur_x = c()
+  #iterate 100 battles for each number of soldiers
+  for (i in rep(1:100)) {
+    cur_x = c(cur_x, armies.function(n))
+  }
+  
+  cur_mew = mean(cur_x)
+
+  y = c(y, cur_mew)
+  
+}
+
+dd <- data.frame(x,y)
+
+dd %>% ggplot(aes(x=x, y=y)) +
+  geom_line( color="grey") +
+  geom_point(shape=21, color="black", fill="#69b3a2", size=6) +
+  xlab("Number of soldiers in each group")+
+  ylab("Number of servivors in the winner group")+
+  ggtitle("Number of survivors in the winner group per soldiers number") + 
+  scale_y_log10() + scale_x_log10()
+
+```
+
+As D subquery there is no connection between the values of x and y.
+The result are more similar to the result in D, and absolutely different from the results in C.
+אסביר את התוצאות:
+בסימולציה שבסעיף זה החייל שיורה יכול לירות לכיוון כל אחד משני הצבאות: או לצבא שלו או לצבא היריב. כלומר לזהות החייל היורה אין השפעה על הקבוצה ממנה החייל יהרג. בתחילת המשחק יש סיכוי שווה לכל אחד מהצבאות להפסיד חייל. אם כן, לזהות החייל היורה אין השפעה על איזה חייל יהרג.
+לאחוז החיילים מכל צבא יש השפעה מסויימת על זהות החייל שיהרג, שכן ככל שקיימים יותר חיילים מצבא מסוים יש גם יותר סיכוי שחייל מצבא זה יהחר.
+במשחק לכל צבא יש סיכוי כ-0.5 לאבד חייל, לכן יקח זמן רב עד שכלל החיילים של צבא מסויים ימות, כלומר הקרב ימשך איטרציות רבות ובתומו לא יוותרו המון חיילים חיים. 
+
+## Sub Question F
+
+In this question the rules of the game are been change dramatically, now in order to answer this question we have to create 4 vectors, 2 will contain the data about the living soldiers and 2 will contain data about the zombies.
+Another addition to the following function is when we remove soldiers that have been shot, we add him to the zombies vector. 
+
+
+```{r}
+armies.function <- function(n) {
+  
+  
+  p_exp <- rexp(n, rate = 1)
+  r_exp <- rexp(n, rate = 1)
+  
+  p_zomb <- c()
+  r_zomb <- c()
+  
+  p_total <- c(p_exp, p_zomb)
+  r_total <- c(r_exp, r_zomb)
+  
+  # the length is depends on the living soldiers
+  num_p = length(p_exp)
+  num_r = length(r_exp)
+  
+  while (num_p > 0 & num_r > 0) {
+    
+    min_p = min(p_total)
+    min_r = min(r_total)
+    
+    if (min_p < min_r) {
+      # find the number of shooters
+      shooter_live = c(which(p_exp == min_p))
+      shooter_zomb = c(which(p_zomb == min_p))
+      shooters = length(shooter_live) + length(shooter_zomb)
+      
+      # memoryless property
+      p_exp = p_exp - min_p
+      p_zomb = p_zomb - min_p
+      
+      # memoryless property
+      r_exp = r_exp - min_p
+      r_zomb = r_zomb - min_p
+      
+      for (s in shooter_live) {
+        p_exp[s] = rexp(1, rate = 1)
+      }
+      
+      for (s in shooter_zomb) {
+        p_zomb[s] = rexp(1, rate = 1)
+      }
+      
+      deads = sample(r_exp, shooters, replace = TRUE)
+      
+      # kill the soldiers and create zombies
+      for (d in deads){
+        r_exp = r_exp[r_exp != d]
+        r_zomb = c(r_zomb, rexp(1, rate = 1))
+      }
+    }
+    
+    if (min_p > min_r) {
+      shooter_live = c(which(r_exp == min_r))
+      shooter_zomb = c(which(r_zomb == min_r))
+      shooters = length(shooter_live) + length(shooter_zomb)
+      
+      # memoryless property
+      p_exp = p_exp - min_r
+      p_zomb = p_zomb - min_r
+      
+      # memoryless property
+      r_exp = r_exp - min_r
+      r_zomb = r_zomb - min_r
+      
+      for (s in shooter_live) {
+        r_exp[s] = rexp(1, rate = 1)
+      }
+      
+      for (s in shooter_zomb) {
+        r_zomb[s] = rexp(1, rate = 1)
+      }
+      
+      deads = sample(p_exp, shooters, replace = TRUE)
+      
+      # kill the soldiers and create zombies
+      for (d in deads){
+        p_exp = p_exp[p_exp != d]
+        p_zomb = c(p_zomb, rexp(1, rate = 1))
+      }
+      
+      
+    }
+
+    
+    if (min_p == min_r) {
+      
+        p_shooter_live = c(which(p_exp == min_p))
+        p_shooter_zomb = c(which(p_zomb == min_p))
+        p_shooters = length(p_shooter_live) + length(p_shooter_zomb)  
+      
+        r_shooter_live = c(which(r_exp == min_r))
+        r_shooter_zomb = c(which(r_zomb == min_r))
+        r_shooters = length(r_shooter_live) + length(r_shooter_zomb)
+        
+        # memoryless property
+        p_exp = p_exp - min_p
+        p_zomb = p_zomb - min_p
+        
+        # memoryless property
+        r_exp = r_exp - min_r
+        r_zomb = r_zomb - min_r
+        
+        for (s in p_shooter_live) {
+          p_exp[s] = rexp(1, rate = 1)
+        }
+        
+        for (s in p_shooter_zomb) {
+          p_zomb[s] = rexp(1, rate = 1)
+        }
+        
+        for (s in r_shooter_live) {
+          r_exp[s] = rexp(1, rate = 1)
+        }
+        
+        for (s in r_shooter_zomb) {
+          r_zomb[s] = rexp(1, rate = 1)
+        }
+        
+        r_deads = sample(r_exp, p_shooters, replace = TRUE)
+        
+        # kill the soldiers and create zombies
+        for (d in r_deads){
+          r_exp = r_exp[r_exp != d]
+          r_zomb = c(r_zomb, rexp(1, rate = 1))
+        }
+        
+        p_deads = sample(p_exp, r_shooters, replace = TRUE)
+        
+        # kill the soldiers and create zombies
+        for (d in p_deads){
+          p_exp = p_exp[p_exp != d]
+          p_zomb = c(p_zomb, rexp(1, rate = 1))
+        }
+      }  
+      
+      p_total <- c(p_exp, p_zomb)
+      r_total <- c(r_exp, r_zomb)
+      
+      num_p = length(p_exp)
+      num_r = length(r_exp)
+  }
+  
+  xs = max(num_p, num_r)
+  return(xs)
+}
+
+```
+
+
+
+
+```{r}
+x = c()
+y = c()
+
+for (j in rep(0:10)) {
+  # the number of soldiers
+  n = 10*(2^j)
+  
+  x = c(x, n)
+
+  cur_x = c()
+  #iterate 100 battles for each number of soldiers
+  for (i in rep(1:100)) {
+    cur_x = c(cur_x, armies.function(n))
+  }
+  
+  cur_mew = mean(cur_x)
+
+  y = c(y, cur_mew)
+  
+}
+
+dd <- data.frame(x,y)
+
+dd %>% ggplot(aes(x=x, y=y)) +
+  geom_line( color="grey") +
+  geom_point(shape=21, color="black", fill="#69b3a2", size=6) +
+  xlab("Number of soldiers in each group")+
+  ylab("Number of servivors in the winner group")+
+  ggtitle("Number of survivors in the winner group per soldiers number") + 
+  scale_y_log10() + scale_x_log10()
+
+```
+
+This simulation took time because that the number of shooters is not getting low.
+The function that might would represent this graph is y=(x)^2 (squre root).
+
+בדומה לגרף בסעיף ג גם בגרף זה ככל שמספר החיילים עולה יוותרו בסיום הקרב יותר חיילים בחיים. כלומר ישנו קשר חיובי בין ערכי הצירים בדומה לגרף בסעיף ג. ההבדל המרכזי בין סעיף זה לסעיף ג הינו כמות החיילים שנותרים בתום הסימולציה. בסימולציה זו נותרים פחות חיילים בסופה שכן לאורך הקרב לא מושג יתרון לקבוצה מסויימת. כלומר לצבא מסוים עם פחות הרוגים יש את אותו סיכוי כמו יריביו לירות באיטרציה הקרובה, כלומר ניצחונות רבים בשלב מסויים בקרב לא יובילו לניצחונות נוספים בהמשך הקרב.
+זה שלא ניתן לשמר יתרון כמו בסעיף ג מוביל לכך שבתום הקרבות יש פחות חיילים שנותרים בחיים בתומו.
+גרף זה שונה מהגרפים בשאלות ד וה שם אין עקביות לאורך המשחק.
+
+
+
+
+## Q2. Analysis and Visualization of Twitter Data (60 pt)    
+
+<img src="https://cdn-0.therandomvibez.com/wp-content/uploads/2018/12/Jokes-On-New-Years-Resolution.jpg" alt="resolutions" width="300"/>
+
+
+a. (4pt) Download and read the tweets dataset file `New-years-resolutions-DFE.csv` available [here](https://github.com/DataScienceHU/DataAnalysisR_2021/blob/master/New-years-resolutions-DFE.csv). 
+The data represents new year's resolutions tweets by American users wishing to change something in their life at the start of the year $2015$, downloaded from [here](https://data.world/crowdflower/2015-new-years-resolutions#). <br>
+Make sure that the tweets `text` column has `character` type. 
+Show the top and bottom two rows of the resulting data-frame. 
+
+
+b. (5pt) The class `times` from the library `chron` stores and displays times in the above format `Hours:Minutes:Seconds`, but also treats them as numeric values between zero and one in units of days. For example, the time `10:48:00` corresponds to the value: $(10 + 48/60)/24 = 0.45$. <br>
+Create a new column with tweet times, of class `times`, with the time of the day for each tweet, in the above format. For example, the first entry in the column corresponding to the time of the first tweet should be: `10:48:00`. <br>
+Make a histogram showing the number of tweets in every hour of the $24$ hours in a day (that is, the bins are times between `00:00` and `00:59`, between `01:00` and `01:59` etc.). <br>
+At which hours do we see the most/fewest tweets?
+
+
+c. (6pt) Plot the distribution of tweets `text` lengths (in characters) made by `females` and `males` separately. Who writes longer tweets? <br>
+Repeat, but this time plot the tweets lengths distribution for tweets in the four different regions of the US
+(`Midwest`, `Northeast`, `South` and `West`). Report the major differences in lengths between regions. <br>
+Finally, show the tweets lengths distribution for tweets for the $10$ different categories given in `Resolution_Category`. Report the major differences in lengths between categories. 
+
+
+d. (8pt) Compute the number of occurrences of each word in the `text` of all the tweets. Ignore upper/lower case differences. <br>
+Remove all common stop words (use the command `stop_words` from the tidytext package). <br>
+Remove words containing the special characters: `#`, `@`, `&`, `-`, `.`, `:` and `?`. <br>
+Remove also non-informative words: `resolution`, `rt`, `2015` and the empty word. <br>
+Plot the top $100$ remaining words in a word cloud, using the `wordcloud2` package. <br>
+
+
+e. (8pt) Find for each of the top (most frequent) $100$ words from 2.(d.) and each of the $10$ tweet categories, the fraction of tweets from this category where the word appears, and list them in a $100 \times 10$ table $F$, with $f_{ij}$ indicating the frequency of word $i$ in category $j$. <br>
+That is, if for example there were $200$ tweets in the category `Humor`, and $30$ of them contained the word `joke`, then the frequency was $0.15$. <br>
+Finally, for each of the $10$ categories we want to find the most `characteristic` words, i.e. words appearing more frequently in this category compared to other categories: <br>
+Formally, compute for each word $i$ and each category $j$ the difference between the frequency in the category and the maximum over frequencies in other categories: $d_{ij} = f_{ij} - \max_{k \neq j} f_{ik}$.
+(For example, if the word `joke` had frequency $0.15$ in `Humor`, and the next highest frequency for this word in other categories is $0.1$, then the difference for this word is $0.05$).
+Find for each category $j$ of the $10$ categories the $3$ `characteristic` words with the highest differences $d_{ij}$. Show a table with the $10$ categories and the $3$ `characteristic` words you have found for each of them. Do the words make sense for the categories? 
+
+
+f. (5pt) Plot the number of tweets in each of the $10$ categories shown in `Resolution_Category`. <br>
+Next, compute and show in a table of size $10 \times 4$ the number of tweets for each of the $10$ categories from users in each of the four regions of the USA: `Midwest`, `Northeast`, `South` and `West`. 
+
+
+
+g. (8pt) We want to test the null hypothesis that users in different `regions`  have the same distribution over `categories` for their resolutions, using the Pearson chi-square statistic: 
+$$
+S = \sum_{i=1}^{10} \sum_{j=1}^{4} \frac{(o_{ij}-e_{ij})^2}{e_{ij}}
+$$
+where $o_{ij}$ is the number of tweets on category $i$ from region $j$ computed in the table in the previous sub-question, assuming some indexing for the categories and regions (for example, $j=1,2,3,4$ for `Midwest`, `Northeast`, `South` and `West`, respectively, and similarly for the categories). The expected counts $e_{ij}$ are given by: 
+$$
+e_{ij} = \frac{o_{ \bullet j} o_{i \bullet}  }  {o_{\bullet \bullet}}
+$$
+where $o_{i \bullet}$ is the sum over the $i$'th row (over all regions), $o_{\bullet j}$  the sum over the $j$'th column (over all categories) and $o_{\bullet \bullet}$ the sum over all observations in the table. These expected counts correspond to independence between the row (categories) and column (regions) according to the null hypothesis. <br>
+Compute and report the test statistic for the table computed in 2.(f). <br>
+Use the approximation $S \sim \chi^2(27)$ to compute a p-value for the above test (there are $(4-1) \times (10-1) = 27$ degrees of freedom). Would you reject the null hypothesis? <br>
+Finally, repeat the analysis (computing a table, $\chi^2$-statistic and p-value) but this time split tweets by `gender` (`male` and `female`) instead of by `region`, to get a $10 \times 2$ table. Is there a significant difference in the distribution of categories between males and females?
+
+
+h. (8pt) Use the following simulation to create a randomized dataset of `(category, region)` pairs for the tweets: <br>
+For each tweet in the dataset keep the real `category` (from the column `Resolution_Category`) but change the `region` randomly by shuffling (permuting) the regions column in a random order, such that the total number of tweets from each region remains the same. <br>
+Repeat this simulation $N=1,000$ times, each time creating a new shuffled random data, with the `category` column remaining the same and the `region` column shuffled each time in a random order. 
+For each such simulation indexed $i$ compute the `category`-by-`region` occurance table and the resulting $\chi^2$ test statistic from 2.(g.) and call it $S_i$. <br>
+Plot the empirical density distribution of the $S_i$ randomized test statistics and compare it to the theoretical density of the $\chi^2(27)$ distribution. Are the distributions similar? <br>
+Finally, compute the empirical p-value, comparing the test statistic $S$ computed on the real data in 2.(g.) to the $1,000$ random statistics:  
+$$
+\widehat{Pval} = \frac{1}{N} \sum_{i=1}^N 1_{\{S_i \geq S\}}.
+$$
+How different from the p-value obtained via the chi-square approximation? 
+
+
+i. (8pt) Compute for each of the $50$ states (and `DC` - District of Columbia) in the US the number of tweets made by users from this state. <br>
+Next, load the `usmap` library that contains the variable `statepop`. <br>
+Use this variable to compute the number of tweets per million residents for each state. <br>
+Remove `DC` and use the `usmap` package to make a map of USA states, where each state is colored by the number of tweets per million residents. <br>
+Report the three states with the maximal and minimal number. 
+
+
+
+**Solutions:**
+
+```{r, echo = FALSE, results = 'hide', warning=FALSE, message=FALSE}
+library(stringr)
+library(tidyr)
+library(tidyverse)
+library(tidytext) 
+library(dplyr)
+library(reshape2)
+library(chron) # for dealing with times 
+library(wordcloud2) # package for drawing word-cloud
+library(usmap) # Show USA map 
+```
+
+First, we would like to import few packages:
+1) 'stringr' will help us remove characters we want to delete from our tweets dataset.
+2) 'stringi' will help us recognize ASCII letters in order to remove the ones which are not.
+3) 'tm' will help us remove stop words and whites paces.
+
+```{r}
+library(stringr)
+library(stringi)
+library(tm)
+```
+
+## Sub Question A
+
+First, we want to import the relevant data from Csv file to a data frame:
+
+```{r}
+df = data.frame(read.csv("C:/Users/Orel Ben Israel/Desktop/New-years-resolutions-DFE.csv", stringsAsFactors = FALSE))
+```
+
+
+If 'text' column is not from character type, I will convert this column to the wanted type:
+
+```{r}
+if (typeof(df$text) != "character") {
+  df$text <- as.character(df$text)
+}
+```
+
+To be sure, we will check if text column is from type 'character':
+
+```{r}
+typeof(df$text)
+class(df$text)
+```
+
+Now we will return the two first and last rows in the imported data frame:
+
+```{r}
+head(df, 2)
+tail(df, 2)
+```
+
+## Sub Question B
+
+copy the source data to another data frame object
+
+```{r}
+df.b <- data.frame(df)
+```
+
+
+First, we would like to create new column with the correct hour visualization 
+
+```{r}
+df.b$tweet_hour <- word(df.b$tweet_created, 2, sep = fixed(" "))
+df.b$tweet_hour <- paste(df.b$tweet_hour,':00')
+```
+
+Now we will create the histogram which shows the frequency of tweets per 24 hours
+
+```{r}
+
+df.b$tweet_hour <- as.times(df.b$tweet_hour)
+
+
+ggplot(df.b, aes(x=tweet_hour)) +
+  ggtitle("Number of Tweets Per Hour") +
+  xlab("Hours") +
+  ylab("Number of Tweets") +
+  geom_histogram(color = "#e9ecef", fill = "#69b3a2",bins = 24) +
+  scale_x_chron(format = "%H",n=24)
+```
+<br>
+The most common hours when people tweeted were between 10:00-12:00 and between 13:00-15:00.
+The fewest tweets were between 02:00-07:00.
+
+## Sub Question C
+
+Again we will copy the source data to another data frame object
+```{r}
+df.c <- data.frame(df)
+```
+
+Second, we will create new column in the data set that contain the length of each tweet:
+
+```{r}
+
+df.c$txtlength <- sapply(strsplit((df.c$text), " "), length)
+```
+
+
+First, Plot of distribution by gender
+
+```{r}
+df.c %>% ggplot(aes(txtlength, fill=gender)) + geom_density(alpha = 0.6) + 
+  ggtitle("Distribution of Text Length By Gender") + xlab("Text Length") + ylab("Density") 
+```
+overall we can see that both gender tended to write tweets with different length.
+nevertheless, there is some differences: there are more men (relatively) than women that write short tweets (1-8 words); (relatively) more women than men write tweets in length of 8-21 words; and more women than men write long tweets (23-30 words).
+
+Second, we will plot the distribution by region:
+
+```{r}
+df.c %>% ggplot(aes(txtlength, fill=tweet_region)) + geom_density(alpha = 0.6) + 
+  ggtitle("Distribution of Text Length By Region") + xlab("Text Length") + ylab("Density") 
+```
+In general the distributions by region are similar.
+If we will compare the distribution in detail we will recognize those:
+1) In the Midwest there are more longer tweets (26-30 words)
+2) As well - in the South there are relatively more people than the west (20-30 words).
+3) In the northwest relatively have more shortest tweets (0-5 words).
+
+Third, Plot of distribution by resolution category
+
+```{r}
+df.c %>% ggplot(aes(txtlength, fill=Resolution_Category)) + geom_density(alpha = 0.3) + 
+  ggtitle("Distribution of Text Length By Resolution Category") + xlab("Text Length") + ylab("Density")
+```
+There are few things we can see:
+1) philanthropic relatively has less long tweets than other categories (24-30 words)
+2) finance has relatively the highest number of tweets with length (12-16 words) and the lowest number of short tweets (1-10 words). 
+
+## Sub Question D
+
+First, we would like to import few packages:
+1) 'stringr' will help us remove characters we want to delete from our tweets data set.
+2) 'stringi' will help us recognize ASCII letters in order to remove the ones which are not.
+3) 'tm' will help us remove stop words and whites paces.
+
+Now we can begin with cleaning the data:
+
+```{r}
+
+df.d <- data.frame(df)
+df.d <- data.frame(df.d$text)
+colnames(df.d)[1] <- "tweet"
+
+df.d$tweet <- lapply(df.d$tweet, tolower)
+
+
+remove_words <- c('rt','resolution','2015', 'http', 'don', 'amp', 'sta')
+
+df.d$tweet <- gsub(x = df.d$tweet, pattern = paste(c(remove_words), collapse = "|"), replacement = "")
+
+df.d$tweet <- str_replace_all(df.d$tweet, "[^[:alnum:]]", " ")
+
+df.d$tweet <- str_replace_all(df.d$tweet, "[[:punct:]]", " ")
+
+df.d$tweet <- removeWords(df.d$tweet, stopwords("english"))
+
+df.d$tweet <- stripWhitespace(df.d$tweet)
+
+df.d$tweet <- lapply(df.d$tweet, stripWhitespace)
+
+df.d$tweet <- str_squish(df.d$tweet)
+
+```
+
+
+After we cleaned the data (the text column with the tweets) we want to split the sentences to singles words and count their occurrences.
+
+```{r}
+sentences.split <- strsplit(df.d$tweet, " ")
+
+words_quantity <- data.frame(table(unlist(sentences.split)))
+
+colnames(words_quantity)[1] <- "word"
+
+colnames(words_quantity)[2] <- "quantity"
+
+words_quantity <-  words_quantity %>% arrange(desc(words_quantity$quantity))
+```
+
+Now we want to remove words with single letter and words with no ASCII letters (words with no English letter).
+
+```{r}
+words_quantity$word_length = str_length(words_quantity$word)
+words_quantity$ascii = stri_enc_isascii(words_quantity$word)
+
+removerows <- which(words_quantity$word_length == 1 | words_quantity$ascii == FALSE)
+words_quantity <- words_quantity[-c(removerows),]
+
+words_quantity <- words_quantity[1:100,]
+
+```
+
+Now lets create our words cloud of the top 100 most popular words in the tweets:
+
+```{r}
+wordcloud2(data=words_quantity,size = 5, minRotation = -pi/6, maxRotation = -pi/6, rotateRatio = 1)
+```
+## Sub Question E
+
+The strategic for solving this question is to create 2 functions:
+The first function gets text columns and clean theme.
+The second function gets the cleaned tweets and the list of the most popular words and returns the number of sentences each word is appear in.
+
+```{r}
+words_quantity.e <- words_quantity[1:100,]
+
+# all sentences
+cleanFunction <- function(categorydata){
+  
+  
+  df.e <- data.frame(categorydata)
+  colnames(df.e)[1] <- "tweet"
+  
+  df.e$tweet <- lapply(df.e$tweet, tolower)
+  
+  
+  remove_words <- c('rt','resolution','2015', 'http', 'don', 'amp', 'sta')
+  
+  df.e$tweet <- gsub(x = df.e$tweet, pattern = paste(c(remove_words), collapse = "|"), replacement = "")
+  
+  
+  df.e$tweet <- str_replace_all(df.e$tweet, "[^[:alnum:]]", " ")
+  
+  df.e$tweet <- str_replace_all(df.e$tweet, "[[:punct:]]", " ")
+  
+  df.e$tweet <- removeWords(df.e$tweet, stopwords("english"))
+
+  df.e$tweet <- stripWhitespace(df.e$tweet)
+  
+  df.e$tweet <- lapply(df.e$tweet, stripWhitespace)
+  
+  df.e$tweet <- str_squish(df.e$tweet)
+  
+  return(df.e)
+}
+
+
+countWords <- function(dfcategory){
+  appear = c()
+  for (w in words_quantity.e$word) {
+    count_words = 0
+    for (i in seq(1:nrow(dfcategory))) {
+      len = length(unlist(strsplit(dfcategory[[1]][i]," ")))
+      x = strsplit(dfcategory[[1]][i]," ")
+      for (j in seq(1:len)){
+        if (w == x[[1]][j]){
+          count_words = count_words + 1
+          break
+        }
+      }
+    }
+    appear = c(appear, count_words)
+  }
+  return(appear)  
+}
+
+```
+
+
+Now we will send the tweets of each category to the function and will get a vector which contains the number of tweets each word (from the 100 most popular word) is appeared in.
+Afterwards we divide this number with the total number of tweets in the specific category, and put it in the table:
+
+```{r}
+
+# Career
+
+career <- df %>% filter(Resolution_Category == "Career") %>% select("text")
+clean_career <- as.data.frame(cleanFunction(career))
+
+count_vector = countWords(clean_career)
+ratio = count_vector/nrow(clean_career)
+words_quantity.e[3] = ratio
+colnames(words_quantity.e)[3] = "career ratio"
+
+#"Education/Training"
+
+edu_train <- df %>% filter(Resolution_Category == "Education/Training") %>% select("text")
+clean_edu_train <- as.data.frame(cleanFunction(edu_train))
+
+count_vector = countWords(clean_edu_train)
+ratio = count_vector/nrow(clean_edu_train)
+words_quantity.e[4] = ratio
+colnames(words_quantity.e)[4] = "education/training ratio"
+
+
+# "Family/Friends/Relationships"
+
+relation <- df %>% filter(Resolution_Category == "Family/Friends/Relationships") %>% select("text")
+clean_relation <- as.data.frame(cleanFunction(relation))
+
+count_vector = countWords(clean_relation)
+ratio = count_vector/nrow(clean_relation)
+words_quantity.e[5] = ratio
+colnames(words_quantity.e)[5] = "family/friends/relationships ratio"
+
+# Finance 
+
+finance <- df %>% filter(Resolution_Category == "Finance") %>% select("text")
+clean_finance <- as.data.frame(cleanFunction(finance))
+
+count_vector = countWords(clean_finance)
+ratio = count_vector/nrow(clean_finance)
+words_quantity.e[6] = ratio
+colnames(words_quantity.e)[6] = "finance ratio"
+
+# "Health & Fitness"
+
+health_fit <- df %>% filter(Resolution_Category == "Health & Fitness") %>% select("text")
+clean_health_fit <- as.data.frame(cleanFunction(health_fit))
+
+count_vector = countWords(clean_health_fit)
+ratio = count_vector/nrow(clean_health_fit)
+words_quantity.e[7] = ratio
+colnames(words_quantity.e)[7] = "health & fitness ratio"
+
+# Humor
+
+humor <- df %>% filter(Resolution_Category == "Humor") %>% select("text")
+clean_humor <- as.data.frame(cleanFunction(humor))
+
+count_vector = countWords(clean_humor)
+ratio = count_vector/nrow(clean_humor)
+words_quantity.e[8] = ratio
+colnames(words_quantity.e)[8] = "humor ratio"
+
+
+# "Personal Growth"
+
+personal_growth <- df %>% filter(Resolution_Category == "Personal Growth") %>% select("text")
+clean_personal_growth <- as.data.frame(cleanFunction(personal_growth))
+
+count_vector = countWords(clean_personal_growth)
+ratio = count_vector/nrow(clean_personal_growth)
+words_quantity.e[9] = ratio
+colnames(words_quantity.e)[9] = "personal growth ratio"
+
+
+# "Philanthropic"
+
+philanthropic <- df %>% filter(Resolution_Category == "Philanthropic") %>% select("text")
+clean_philanthropic <- as.data.frame(cleanFunction(philanthropic))
+
+count_vector = countWords(clean_philanthropic)
+ratio = count_vector/nrow(clean_philanthropic)
+words_quantity.e[10] = ratio
+colnames(words_quantity.e)[10] = "philanthropic ratio"
+
+# "Recreation & Leisure"
+
+rec_leisure <- df %>% filter(Resolution_Category == "Recreation & Leisure") %>% select("text")
+clean_rec_leisure <- as.data.frame(cleanFunction(rec_leisure))
+
+count_vector = countWords(clean_rec_leisure)
+ratio = count_vector/nrow(clean_rec_leisure)
+words_quantity.e[11] = ratio
+colnames(words_quantity.e)[11] = "recreation & leisure ratio"
+
+# "Time Management/Organization"
+
+time_manage <- df %>% filter(Resolution_Category == "Time Management/Organization") %>% select("text")
+clean_time_manage <- as.data.frame(cleanFunction(time_manage))
+
+count_vector = countWords(clean_time_manage)
+ratio = count_vector/nrow(clean_time_manage)
+words_quantity.e[12] = ratio
+colnames(words_quantity.e)[12] = "time management/organization ratio"
+```
+
+Here is the wanted table, The columns represent the different category (j) and the rows represent the most frequent words (i).
+The f_ij indicating the frequency of word i in category j:
+
+```{r}
+words_quantity.e
+```
+
+Now we want to compute for each word i and each category j the difference between the frequency in the category and the maximum over frequencies in other categories.
+I will create a new table with those differences:
+
+
+First I will change the direction of the table (because we want to do manipulations on the columns - on the differences of word in each category)
+
+```{r}
+# change the direction of the table (because we want to do manipulations on the columns - differences of word in each category)
+new_words_quantity.e <- data.frame(t(words_quantity.e))
+
+my.names <- new_words_quantity.e[1,]
+
+# change the new columns names
+
+colnames(new_words_quantity.e) <- my.names
+
+# Delete the 2 firs rows (words and quantity)
+new_version_words_quantity.e <- as.data.frame(new_words_quantity.e[-c(1, 2),])
+
+differences <- as.data.frame(new_version_words_quantity.e)
+
+for (i in seq(1:100)) {
+  differences[[i]] = as.numeric(differences[[i]])
+  differences[[i]] = differences[[i]] - max(differences[[i]])  
+}
+
+for (i in seq(1:100)) {
+  differences[[i]] = ifelse(differences[[i]] == 0, (-1)*differences[[i]][order(differences[[i]])[9]], differences[[i]])
+}
+```
+
+
+Here is the differences table
+I computed for each word i and each category j the difference between the
+frequency in the category and the maximum over frequencies in other categories:
+
+```{r}
+differences
+```
+
+
+In order to compare between the differences values of each word in every category we will transform the table again:
+```{r}
+new_differences <- data.frame(t(differences))
+
+```
+
+For each category we will find the 3 characteristic words with the highest differences d_ij
+
+```{r}
+career.t <- tail(order(new_differences$career.ratio), 3)
+carrer.w =c()
+for (t in career.t){
+  carrer.w =c(carrer.w, (row.names(new_differences)[t])) 
+}
+
+education.t <- tail(order(new_differences$education.training.ratio), 3)
+education.w =c()
+for (t in education.t){
+  education.w =c(education.w, (row.names(new_differences)[t])) 
+}
+
+family.t <- tail(order(new_differences$family.friends.relationships.ratio), 3)
+family.w =c()
+for (t in family.t){
+  family.w =c(family.w, (row.names(new_differences)[t])) 
+}
+
+finance.t <- tail(order(new_differences$finance.ratio), 3)
+finance.w =c()
+for (t in finance.t){
+  finance.w =c(finance.w, (row.names(new_differences)[t])) 
+}
+
+health.t <- tail(order(new_differences$health...fitness.ratio), 3)
+health.w =c()
+for (t in health.t){
+  health.w = c(health.w, (row.names(new_differences)[t])) 
+}
+
+humor.t <- tail(order(new_differences$humor.ratio), 3)
+humor.w =c()
+for (t in humor.t){
+  humor.w = c(humor.w, (row.names(new_differences)[t])) 
+}
+
+personal.t <- tail(order(new_differences$personal.growth.ratio), 3)
+personal.w =c()
+for (t in personal.t){
+  personal.w = c(personal.w, (row.names(new_differences)[t])) 
+}
+
+philanthropic.t <- tail(order(new_differences$philanthropic.ratio), 3)
+philanthropic.w =c()
+for (t in philanthropic.t){
+  philanthropic.w = c(philanthropic.w, (row.names(new_differences)[t])) 
+}
+
+recreation.t <- tail(order(new_differences$recreation...leisure.ratio), 3)
+recreation.w =c()
+for (t in recreation.t){
+  recreation.w = c(recreation.w, (row.names(new_differences)[t])) 
+}
+
+management.t <- tail(order(new_differences$time.management.organization.ratio), 3)
+management.w =c()
+for (t in management.t){
+  management.w = c(management.w, (row.names(new_differences)[t])) 
+}
+```
+
+Here is the final table with the 10 categories and the 3 characteristic words I have found for each of them:
+
+```{r}
+final.data <- data.frame(carrer.w, education.w, family.w, finance.w, health.w, humor.w, personal.w, philanthropic.w, recreation.w, management.w)
+final.data
+```
+
+The words defiantly make sense for the categories!
+1) In career category we can see active verbs and words that connected to the job world.<br>
+2) In education we can see the verb learn which represent the main action we do as students.<br>
+3) In family you can see the words that represent our closer environment: friends, family and people.<br>
+4) In finance you can see the noun money and the verb make (perhaps money).<br>
+5) In health you can see the word gyp where you can keep your body health.<br>
+In addition, we can see the pronoun (prevent from) smoking and the verb eat (perhaps healthier).<br>
+6) In humor we see general words. <br>
+7) In personal growth we can see positive words. <br>
+8) In philanthropic category we can see positive and general words. <br>
+9) In recreation category we can see active verbs: see, watch, go. <br>
+10) In management we can see words that are connected to time. <br>
+
+## Sub Question F
+
+First we will plot the number of tweets in each of the 10 categories shown in Resolution_Category:
+In order to do so we 
+
+```{r}
+df.f = data.frame(df)
+categories_names <- levels(as.factor(df.f$Resolution_Category))
+
+count_apperance = c()
+for (c in categories_names){
+  sen <- df.f %>% filter(Resolution_Category == c) %>% select("text")
+  count_apperance = c(count_apperance, nrow(sen))
+}
+
+dd <- data.frame(categories_names, count_apperance)
+
+p <- ggplot(data=dd, aes(x=categories_names, y=count_apperance)) +
+  geom_bar(stat="identity", fill="steelblue")+
+  geom_text(aes(label=count_apperance), vjust=0, size=3.5)+
+  theme_minimal() + scale_x_discrete(guide = guide_axis(angle = 90)) +
+  xlab("Categories") + ylab("Number of Tweets") +
+  ggtitle("Number of Tweets Per Category")
+
+p
+
+```
+<br>
+Now, we will compute and show in a table of size 10×4 the number of tweets for each of the 10 categories from users in each of the four regions of the USA: Midwest, Northeast, South and West:
+
+```{r}
+categories_names <- levels(as.factor(df.f$Resolution_Category))
+
+countTweets <- function(n){
+regionTweets = c()
+for (c in categories_names){
+  num <- df.f %>% filter(Resolution_Category == c & tweet_region == n) %>% nrow
+  regionTweets = c(regionTweets, num)
+}
+return(regionTweets)
+}
+
+```
+I created 'countTweets' function which gets region name and returns the number of tweets from people of that region seperated by category.
+
+Now we will use this function and get 4 vectors which contain 10 numbers, each one of them is the number of tweets in specific area and related to one of the 10 categories: 
+
+```{r}
+south <- countTweets("South")
+west <- countTweets("West")
+northeast <- countTweets("Northeast")
+midwest <- countTweets("Midwest")
+
+```
+
+Now we will create a data frame which contains the 4 vectors.
+
+```{r}
+region.tweet.table <- data.frame(south, west, northeast, midwest)
+row.names(region.tweet.table) <- categories_names
+```
+
+Here is the wanted table:
+
+```{r}
+region.tweet.table
+```
+
+## Sub Question g
+
+First off all, we will create a copy for our source data frame:
+```{r}
+df.g <- data.frame(df)
+```
+
+We want to test the null hypothesis that users in different regions have the same distribution over categories for their resolutions, using the Pearson chi-square statistic.
+
+In order to answer this question I will use the Chi-squared test:
+Lets say alpha is equal to 0.05, degrees of freedom = 27
+Null H: users in different regions have the same distribution over categories for their resolutions.
+Alternative H: users in different regions have not the same distribution over categories for their resolutions.
+
+If we will get p-val < 0.05=alpha we will reject the null hypothesis, otherwise we wont.
+
+First, we will calculate the statistic:
+
+```{r}
+
+CHI_region_category_test <- chisq.test(df.g$Resolution_Category, df.g$tweet_region)
+region_category_statistic <- CHI_region_category_test$statistic
+p_val_region_category <- 1 - pchisq(region_category_statistic, 27)
+
+```
+
+We got the p-val of region and category relation is `r p_val_region_category` this value is higher than 0.05 therefore we wont reject our null hypothesis.
+
+Now, We want to test the null hypothesis that users with different gender have the same distribution over categories for their resolutions, using the Pearson chi-square statistic:
+Lets set alpha is equal to 0.05, degrees of freedom = 27
+
+If we will get p-val < 0.05=alpha we will reject the null hypothesis, otherwise we wont.
+
+```{r}
+
+CHI_gender_category_test <- chisq.test(df.g$Resolution_Category, df.g$gender)
+gender_category_statistic <- CHI_gender_category_test$statistic
+p_val_gender_category <- 1 - pchisq(gender_category_statistic, 27)
+
+```
+
+We got the p-val of gender and category relation is `r p_val_gender_category` this value is lower than 0.05 therefore we will reject our null hypothesis.
+
+
+## Sub Question I
+
+First we will calculate the number of tweets per state:
+
+```{r}
+
+df.i <- data.frame(df) 
+satates.f <- as.factor(df.i$tweet_state)
+
+states = levels(satates.f)
+
+states_tweets = c()
+for (s in states){
+  statetweet <- df %>% filter(tweet_state == s) %>% nrow
+  states_tweets = c(states_tweets, statetweet)
+}
+
+state_tweets_dt = data.frame(states, states_tweets)
+colnames(state_tweets_dt)[2] = "Number of Tweets"
+colnames(state_tweets_dt)[1] = "abbr"
+
+```
+
+Here is the table which contains the number of tweets per state in the US: 
+
+```{r}
+# Number of Tweets
+state_tweets_dt
+
+```
+
+Now with the information from the `statepop` variable we will calculate the number of tweets in each state per milion:
+this variable contains the number of residents in each state in the US and in Colombia.
+```{r}
+
+state_tweets_dt <- state_tweets_dt %>% left_join(statepop, by=c("abbr"))
+state_tweets_dt <- state_tweets_dt[,-c(3,4)]
+state_tweets_dt$tweets_per_milion <- (state_tweets_dt$`Number of Tweets`/state_tweets_dt$pop_2015)*1000000
+```
+
+Here is the updated table:
+```{r}
+state_tweets_dt
+```
+
+Lets remove DC from the table:
+```{r}
+state_tweets_dt <- state_tweets_dt[-c(which(state_tweets_dt$abbr == "DC")),]
+```
+
+Now we will use the 'usmap' package to make a map of USA states, where each state is colored by the number of tweets per million residents:
+
+```{r}
+
+mapData <- data.frame(state_tweets_dt$abbr, state_tweets_dt$tweets_per_milion)
+colnames(mapData) <- c("state", "Tweets Per Milion")
+
+
+plot_usmap(data = mapData, values = "Tweets Per Milion", color = "black") +
+  scale_fill_continuous(low = "white", high = "darkgreen", name = "Tweets Per Milion") +
+  labs(title = "Tweets Per Milion Resident in The States of US") + 
+  theme(legend.position = "right")
+
+```
+
+Now lets check which 3 states have the fewest tweets per milion residents:
+
+```{r}
+fewesttweets <- c()
+fewest <- head(order(mapData$`Tweets Per Milion`), 3)
+for (i in fewest){
+  fewesttweets <- c(fewesttweets, mapData$state[i])
+}
+fewesttweets
+```
+The 3 states have the fewest tweets per million are: North Dakota,Montana, Delaware.
+
+Now we will check which 3 states has the most tweets per milion residents:
+```{r}
+mosttweets <- c()
+most <- tail(order(mapData$`Tweets Per Milion`), 3)
+for (i in most){
+  mosttweets <- c(mosttweets, mapData$state[i])
+}
+mosttweets
+```
+The 3 states have the highest tweets per million are: Massachusetts, Alaska, New York.
